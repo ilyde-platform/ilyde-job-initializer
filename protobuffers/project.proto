@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+option java_multiple_files = true;
+option java_package = "org.hopenly.ilyde.grpc";
+option java_outer_classname = "ProjectProto";
+option objc_class_prefix = "PS";
+
+package project;
+
+// The project service definition.
+service ProjectServices {
+    // Retrieve a project from id
+    rpc Retrieve (ID) returns (Project) {}
+    //  Create a project
+    rpc Create (Project) returns (Project) {}
+    // Update a project
+    rpc Update (Project) returns (Project) {}
+    // Delete a project from ID
+    rpc Delete (ID) returns (OperationStatus) {}
+    // Search for projects
+    rpc Search (SearchRequest) returns (SearchResponse) {}
+    // Retrieve a project's revision from id
+    rpc RetrieveRevision (ID) returns (Revision) {}
+    //  Create a project's Revision
+    rpc CreateRevision (google.protobuf.Struct) returns (Revision) {}
+    // Search for project's revisions
+    rpc SearchRevision (SearchRequest) returns (SearchRevisionResponse) {}
+}
+
+// FileVersion
+message FileVersion {
+    string name = 1;
+    string version = 2;
+}
+
+// ID message
+message ID {
+    string id = 1;
+}
+
+// message User
+message User {
+    string id = 1;
+    string username = 2;
+    string name = 3;
+}
+
+// message IDE
+enum VISIBILITY {
+    PRIVATE = 0;
+    PUBLIC = 1;
+}
+
+// message STATE
+enum STATE {
+    OPEN = 0;
+    CLOSED = 1;
+}
+
+// message TEMPLATE
+enum TEMPLATE {
+    GENERIC = 0;
+    SKLEARN = 1;
+}
+
+// message Project
+message Project {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    VISIBILITY visibility = 4;
+    TEMPLATE template = 5;
+    User owner = 6;
+    repeated User members = 7;
+    STATE state = 8;
+    repeated google.protobuf.Struct labels = 9;
+    string create_at = 10;
+    string last_update = 11;
+}
+
+// message Revision
+message Revision {
+    string id = 1;
+    string commit = 2;
+    User author = 3;
+    string project = 4;
+    repeated FileVersion file_tree = 5;
+    string create_at = 6;
+}
+
+// message OperationStatus
+message OperationStatus {
+    uint32 status = 1;
+    string message = 2;
+}
+
+// message  searchRequest
+message SearchRequest {
+    google.protobuf.Struct filter = 1; // PyMongo raw filter (json)
+    int32 page_number = 2;
+    int32 result_per_page = 3;
+}
+
+// message  searchResponse
+message SearchResponse {
+    int32 total = 1; // search total count results
+    int32 page_number = 2;
+    int32 result_per_page = 3;
+    repeated Project projects = 4;
+}
+
+// message  searchRevisionResponse
+message SearchRevisionResponse {
+    int32 total = 1; // search total count results
+    int32 page_number = 2;
+    int32 result_per_page = 3;
+    repeated Revision revisions = 4;
+}

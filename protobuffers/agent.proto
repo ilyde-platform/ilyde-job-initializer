@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "org.hopenly.ilyde.grpc";
+option java_outer_classname = "JobAgentProto";
+option objc_class_prefix = "JAS";
+
+package jobs;
+
+// The job agent service definition.
+service JobAgentServices {
+    // Pull changes in Ilyde working dir
+    rpc Sync (SyncRequest) returns (OperationStatus) {}
+    // Commit changes in Ilyde working dir
+    rpc Commit (CommitRequest) returns (OperationStatus) {}
+    // Fetch changes in Ilyde working dir
+    rpc getChanges(google.protobuf.Empty) returns (OperationStatus) {}
+}
+
+
+// message OperationStatus
+message OperationStatus {
+    uint32 status = 1;
+    string message = 2;
+}
+
+// message Commit Message.
+message CommitRequest {
+    string msg = 2;
+}
+
+// message Commit Message.
+message SyncRequest {
+    string revision = 1; // revison to link with
+}
+
+// message Changes response
+message ChangeResponse {
+    uint32 total = 1; // count of files that have changes
+    repeated string changes = 2; // filenames
+}
