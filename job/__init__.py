@@ -23,6 +23,16 @@ class Watcher:
         self.observer.stop()
         self.observer.join()
 
+    def flush(self):
+        try:
+            with open(self.log, "w") as f:
+                f.seek(0)
+                f.truncate()
+
+            return True
+        except FileNotFoundError as e:
+            return False
+
     def get_state(self):
         # retrieve all modifications
         try:

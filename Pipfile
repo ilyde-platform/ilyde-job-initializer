@@ -21,6 +21,9 @@ click = "*"
 grpc-interceptor = "*"
 watchdog = "*"
 etcd3 = "*"
+mlflow = "==1.8.0"
+pika = "*"
+websockets = "*"
 
 [dev-packages]
 

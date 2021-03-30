@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/struct.proto";
-
 option java_multiple_files = true;
 option java_package = "org.hopenly.ilyde.grpc";
 option java_outer_classname = "DatasetProto";
@@ -18,15 +16,15 @@ service DatasetServices {
     // Update a dataset using information
     rpc UpdateDataset (Dataset) returns (Dataset) {}
     // Delete a dataset with ObjectID
-    rpc DeleteDataset (ID) returns (OperationStatus) {}
+    rpc DeleteDataset (ID) returns (Status) {}
     // Search for datasets
     rpc SearchDatasets (SearchDatasetRequest) returns (SearchDatasetResponse) {}
-    // Retrieve a dataset's version passing the version'ID
-    rpc RetrieveDatasetVersion (ID) returns (Version) {}
+    // Retrieve a dataset's version passing the version's id
+    rpc RetrieveVersion (ID) returns (Version) {}
     //  Create a dataset version passing a Dataset's ID for which to create a version
-    rpc CreateDatasetVersion (google.protobuf.Struct) returns (Version) {}
+    rpc CreateVersion (Version) returns (Version) {}
     // Search for dataset's versions
-    rpc SearchDatasetVersions (SearchVersionRequest) returns (SearchVersionResponse) {}
+    rpc SearchVersions (SearchVersionRequest) returns (SearchVersionResponse) {}
     // Create bucket
     rpc CreateBucket (Bucket) returns (Bucket) {}
 }
@@ -42,23 +40,31 @@ message File {
     uint64 size = 2;
 }
 
-// The dataset message representing a dataset metadata
+// message
+enum SCOPE {
+    Local = 0;
+    Global = 1;
+}
+
+// The dataset message
 message Dataset {
     string id = 1;
     string name = 2;
     string description = 3;
-    repeated google.protobuf.Struct labels = 4;
-    string version = 5;
-    string create_at = 6;
-    string last_update = 7;
+    SCOPE scope = 4;
+    string project = 5;
+    string version = 6;
+    string create_at = 7;
+    string last_update = 8;
 }
 
-// The Version message representing a Dataset Version
+// The Version message
 message Version {
     string id = 1;
     string name = 2;
     string dataset = 3;
     string related_bucket = 4;
+    string author = 8; // id of the user that create this version
     repeated File bucket_tree = 5;
     uint64 size = 6;
     string create_at = 7;
@@ -69,38 +75,50 @@ message ID {
     string id = 1;
 }
 
-// message OperationStatus
-message OperationStatus {
+// message Status
+message Status {
     uint32 status = 1;
     string message = 2;
 }
 
-// message for Datasets filtering
+// message  dataset search request
 message SearchDatasetRequest {
-    google.protobuf.Struct filter = 1;
-    uint32 page_number = 2;
-    uint32 result_per_page = 3;
+    DatasetFilter query = 1;
+    int32 page = 2;
+    int32 limit = 3;
+    message  DatasetFilter {
+        string id = 1;
+        string name = 2;
+        SCOPE scope = 3;
+        string project = 4;
+    }
+}
+
+// message version search request
+message SearchVersionRequest {
+    VersionFilter query = 1;
+    int32 page = 2;
+    int32 limit = 3;
+    message  VersionFilter {
+        string id = 1;
+        string name = 2;
+        string dataset = 3;
+        string author = 4;
+    }
 }
 
 // search response for dataset
 message  SearchDatasetResponse {
     uint32 total = 1; // search total count results
-    uint32 page_number = 2;
-    uint32 result_per_page = 3;
-    repeated Dataset datasets = 4;
+    int32 page = 2;
+    int32 limit = 3;
+    repeated Dataset data = 4;
 }
 
-// message  searching versions of a dataset
-message SearchVersionRequest {
-    google.protobuf.Struct filter = 1;
-    int32 page_number = 2;
-    int32 result_per_page = 3;
-}
-
-// message for searching response for versions
+// message for search response for versions
 message SearchVersionResponse {
     int32 total = 1; // search total count results
-    int32 page_number = 2;
-    int32 result_per_page = 3;
-    repeated Version versions = 4;
+    int32 page = 2; 
+    int32 limit = 3;
+    repeated Version data = 4;
 }
