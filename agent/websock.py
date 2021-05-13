@@ -115,7 +115,7 @@ class JobAgentSocket(object):
         # create dataset version
         for dataset_id, dataset_version, mount_output in self.datasets:
             if mount_output:
-                dataset_path = os.path.join(config.ILYDE_WORKING_DIR, "output",
+                dataset_path = os.path.join(config.ILYDE_WORKING_DIR, "datasets", "output",
                                             self.bucket_mappings[dataset_id]["name"])
                 if os.listdir(dataset_path):
                     utils.create_dataset_version(dataset_id, self.bucket_mappings[dataset_id]["bucket"], self.author)

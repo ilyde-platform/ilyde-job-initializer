@@ -98,21 +98,23 @@ def mount_dataset(dataset_id, version, credentials_file, mount_output=False):
         os.mkdir(cache)
 
     version_detail = search_dataset_version(dataset_id, version)
-    if version_detail is None:
+    if version_detail is None and not mount_output:
         return dataset_bucket, None
 
-    dataset_bucket = version_detail.related_bucket
-    mount_point = os.path.join(dirname, dataset_detail.name)
-    cache_dir = os.path.join(cache, dataset_detail.name)
-    os.makedirs(mount_point, exist_ok=True)
-    os.mkdir(cache_dir)
-    command = "s3fs {minio_bucket} {mount_point} -o passwd_file={credentials_file}" \
-              " -o url={minio_endpoint} -o use_path_request_style -o ro -o" \
-              " use_cache={cache_dir} -o umask=022".format(minio_endpoint=config.MINIO_ENDPOINT,
-                                                           minio_bucket=dataset_bucket,
-                                                           mount_point=mount_point,
-                                                           cache_dir=cache_dir,
-                                                           credentials_file=credentials_file)
+    if version_detail is not None:
+        dataset_bucket = version_detail.related_bucket
+        mount_point = os.path.join(dirname, dataset_detail.name)
+        cache_dir = os.path.join(cache, dataset_detail.name)
+        os.makedirs(mount_point, exist_ok=True)
+        os.mkdir(cache_dir)
+        command = "s3fs {minio_bucket} {mount_point} -o passwd_file={credentials_file}" \
+                  " -o url={minio_endpoint} -o use_path_request_style -o ro -o" \
+                  " use_cache={cache_dir} -o umask=022".format(minio_endpoint=config.MINIO_ENDPOINT,
+                                                               minio_bucket=dataset_bucket,
+                                                               mount_point=mount_point,
+                                                               cache_dir=cache_dir,
+                                                               credentials_file=credentials_file)
+        run_command(command)
 
     if mount_output:
         # just create a dir and then we will create a version from
@@ -128,9 +130,9 @@ def mount_dataset(dataset_id, version, credentials_file, mount_output=False):
 
         run_command(command)
 
-    run_command(command)
+        return dataset_bucket, dataset_detail.name
 
-    return dataset_bucket, dataset_detail.name
+    return dataset_bucket, None
 
 
 def commit_project(project_id, message, author, changes):

@@ -89,7 +89,8 @@ def main(kind, command, project_id, project_revision_id, user_id, dataset):
 
         for dataset_id, dataset_version, mount_output in dataset:
             if mount_output:
-                dataset_path = os.path.join(config.ILYDE_WORKING_DIR, "output", bucket_mappings[dataset_id]["name"])
+                dataset_path = os.path.join(config.ILYDE_WORKING_DIR, "datasets", "output",
+                                            bucket_mappings[dataset_id]["name"])
                 if os.listdir(dataset_path):
                     utils.create_dataset_version(dataset_id, bucket_mappings[dataset_id]["bucket"], author)
 
