@@ -85,6 +85,27 @@ def copy_project(project_id, revision_id):
             pass
 
 
+def copy_project_files(project_id, files):
+    channel = grpc.insecure_channel(config.PROJECTS_SERVICES_ENDPOINT)
+    stub = project_pb2_grpc.ProjectServicesStub(channel=channel)
+
+    project = stub.Retrieve(project_pb2.ID(id=project_id))
+
+    # get minio client
+    minio_client = get_minio_client()
+    for file in files:
+        destination = os.path.join(config.ILYDE_WORKING_DIR, file["name"])
+        try:
+            obj = minio_client.fget_object(bucket_name=project.repo_bucket, object_name=file["name"],
+                                           file_path=destination, version_id=file["version"])
+            # add modification time
+            os.utime(destination, (time.mktime(time.localtime()), time.mktime(obj.last_modified)))
+        except MinioError as e:
+            pass
+        except Exception as e:
+            pass
+
+
 def mount_dataset(dataset_id, version, credentials_file, mount_output=False):
     # retrieve dataset version
     dataset_detail = retrieve_dataset(dataset_id)

@@ -40,10 +40,11 @@ logging.basicConfig(level=logging.INFO, format=log_fmt)
 @click.option('--project-revision-id', required=True, type=str)
 @click.option('--user-id', required=True, type=str)
 @click.option('--dataset', multiple=True, type=(str, str, bool))
-def main(kind, command, project_id, project_revision_id, user_id, dataset):
+@click.option('--copy/--no-copy', default=True)
+def main(kind, command, project_id, project_revision_id, user_id, dataset, copy):
     logger = logging.getLogger(__name__)
     # copy project files
-    if not os.listdir(config.ILYDE_WORKING_DIR):
+    if copy:
         utils.copy_project(project_id, project_revision_id)
 
     # s3fs credentials

@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 import asyncio
+import errno
 import json
 import logging
 import os
@@ -42,17 +43,38 @@ class JobAgentSocket(object):
     def __init__(self, project_id, project_revision_id, author,
                  datasets, bucket_mappings, watcher: Watcher):
         self.project_id = project_id
-        self.current_project_revision_id = project_revision_id
         self.author = author
         self.watcher = watcher
         self.datasets = datasets
         self.bucket_mappings = bucket_mappings
 
+        if os.path.exists(config.ILYDE_WORKING_DIR_CONFIG):
+            with open(config.ILYDE_WORKING_DIR_CONFIG, ) as f:
+                data = json.load(f)
+                self.current_project_revision_id = data["revision"]
+        else:
+            self.current_project_revision_id = project_revision_id
+            data = {"revision": project_revision_id}
+            # save revision in config
+            self.save_config(data)
+
+    @staticmethod
+    def save_config(data):
+        if not os.path.exists(os.path.dirname(config.ILYDE_WORKING_DIR_CONFIG)):
+            try:
+                os.makedirs(os.path.dirname(config.ILYDE_WORKING_DIR_CONFIG), exist_ok=True)
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        with open(config.ILYDE_WORKING_DIR_CONFIG, "w") as f:
+            json.dump(data, f)
+
     def diff(self):
         revision = utils.last_project_revision(self.project_id)
-        diff = []
+        diffs = []
         if self.current_project_revision_id != revision.id:
-            diff = diff_revisions(
+            diffs = diff_revisions(
                 json_format.MessageToDict(revision, preserving_proto_field_name=True,
                                           including_default_value_fields=True),
                 json_format.MessageToDict(utils.retrieve_project_revision(self.current_project_revision_id),
@@ -63,15 +85,25 @@ class JobAgentSocket(object):
         res = {
             "action": "diff",
             "type": "file_tree",
-            "message": diff
+            "message": diffs
         }
 
         return json.dumps(res)
 
     def sync(self):
         revision = utils.last_project_revision(self.project_id)
-        utils.copy_project(self.project_id, revision.id)
-        self.current_project_revision_id = revision.id
+        if self.current_project_revision_id != revision.id:
+            diffs = diff_revisions(
+                json_format.MessageToDict(revision, preserving_proto_field_name=True,
+                                          including_default_value_fields=True),
+                json_format.MessageToDict(utils.retrieve_project_revision(self.current_project_revision_id),
+                                          preserving_proto_field_name=True,
+                                          including_default_value_fields=True),
+            )
+
+            utils.copy_project_files(self.project_id, diffs)
+            self.current_project_revision_id = revision.id
+
         res = {
             "action": "sync",
             "type": "status",
@@ -99,6 +131,9 @@ class JobAgentSocket(object):
                 response = utils.commit_project(self.project_id, msg, self.author, changes)
                 self.current_project_revision_id = response.id
                 self.watcher.flush()
+                data = {"revision": response.id}
+                # save revision in config
+                self.save_config(data)
 
             res = {
                 "action": "commit",
